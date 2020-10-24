@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<launch>
+
+<!-- Load and parse robot model -->
+<param name="robot_description" command="$(find xacro)/xacro --inorder '$(find diff_driver_test)/urdf/my_diff_robot.urdf.xacro'"/>
+
+<!-- Robot State Publisher -->
+<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>  
+
+<!-- Load controllers configuration-->
+<rosparam file="$(find diff_driver_test)/config/controller_def.yaml" command="load"/>
+
+<!-- Load controllers -->
+<node 
+    name="controller_spawner" 
+    pkg="controller_manager" 
+    type="spawner" 
+    respawn="false"
+    output="screen"
+    args="joint_state_controller 
+    mobile_base_controller"
+/>
+
+<!-- Gazebo Initialization -->
+<include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="use_sim_time" value="true"/>
+</include> 
+
+<node 
+    pkg="gazebo_ros" 
+    type="spawn_model" 
+    name="spawn_robot"
+    respawn="false"
+    args="  -param robot_description
+            -urdf
+            -model differential"
+/>
+
+<!-- RVIZ Visualization -->
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find diff_driver_test)/config/config_gazebo.rviz"/>
+
+<!-- RQT Steering -->
+<node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
+  <param name="default_topic" value="/mobile_base_controller/cmd_vel"/> 
+</node>
+
+</launch>
